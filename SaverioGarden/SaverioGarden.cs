@@ -12,6 +12,7 @@ using System.Reflection;
 
 namespace SaverioGarden;
 
+using Font = class_1;
 //using PartType = class_139;
 //using Permissions = enum_149;
 //using BondType = enum_126;
@@ -19,7 +20,7 @@ namespace SaverioGarden;
 //using Bond = class_277;
 //using AtomTypes = class_175;
 //using PartTypes = class_191;
-//using Texture = class_256;
+using Texture = class_256;
 public class MainClass : QuintessentialMod
 {
 	public static MethodInfo PrivateMethod<T>(string method) => typeof(T).GetMethod(method, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
@@ -79,6 +80,14 @@ public class MainClass : QuintessentialMod
 	static bool currentCampaignIsRMC(SolitaireScreen screen) => currentCampaignIsRMC() && !isQuintessenceSigmarGarden(screen);
 
 
+
+	static bool includeAnimismus = true;
+	static bool includeAir = true;
+	static bool includeWater = true;
+	static bool includeFire = true;
+	static bool includeEarth = true;
+	static bool includeSalt = true;
+
 	public static void SolitaireScreen_Method_50(On.SolitaireScreen.orig_method_50 orig, SolitaireScreen screen_self, float timeDelta)
 	{
 		if (PressedShowCustomOptions())
@@ -93,11 +102,42 @@ public class MainClass : QuintessentialMod
 		if (!currentCampaignIsRMC(screen_self) || !showingCustomOptions) return;
 		if (GameLogic.field_2434.method_938() is class_16) return;
 
-		//Vector2 vector2_1 = new Vector2(1516f, 922f);
-		//Vector2 vector2_2 = (class_115.field_1433 / 2 - vector2_1 / 2 + new Vector2(-2f, -11f)).Rounded();
-		//Vector2 vector2_3 = vector2_2 + new Vector2(980f, 127f);
+		/////////////////////////////////////////////
+		// time to draw the customization options
+		Vector2 panelDimensions = new Vector2(1516f, 922f);
+		Vector2 panelOrigin = (class_115.field_1433 / 2 - panelDimensions / 2 + new Vector2(-2f, -11f)).Rounded();
+		Color textColor = class_181.field_1718;
+
+		// draw paper image over the usual story panel
+		Texture paper = class_238.field_1989.field_100.field_131;
+		class_135.method_263(paper, Color.Gray(32), panelOrigin + new Vector2(88f, 93f), new Vector2(494f, paper.method_689()));
+
+		// draw title and information
+		Vector2 position = panelOrigin + new Vector2(340f, 820f);
+		UI.DrawText("Saverio's Garden", position, UI.Title, textColor, TextAlignment.Centred, 463f);
+		position -= new Vector2(0, 40f);
 
 
+		position = panelOrigin + new Vector2(98f, 780f);
+		void drawHeader(string header)
+		{
+			UI.DrawText(header, position + new Vector2(5f, 9f), UI.SubTitle, textColor, TextAlignment.Left, 463f);
+			position -= new Vector2(0, 38f);
+		}
+		void checkToggle(ref bool toggle, string name)
+		{
+			if (UI.DrawCheckbox(position, name, toggle)) toggle = !toggle;
+			position -= new Vector2(0, 38f);
+		}
+
+		drawHeader("Customize the board generation with the settings below. Settings are applied to the next board generated, even if this menu is not visible.");
+		drawHeader("");
+		//drawHeader("Include the following atom types:");
+		//checkToggle(ref includeAnimismus, "Vitae/Mors");
+		//checkToggle(ref includeAir, "Air");
+		//checkToggle(ref includeWater, "Water");
+		//checkToggle(ref includeFire, "Fire");
+		//checkToggle(ref includeEarth, "Earth");
 
 
 	}
