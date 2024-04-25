@@ -1,0 +1,13 @@
+Name: SaverioGarden
+Version: 0.0.1
+Icon: saverioGarden/mod_icon
+Title: Saverio's Garden
+Desc: "Adds experimental board generation options for RMC's solitaire variant.\n "
+DLL: "SaverioGarden/bin/Debug/net452/SaverioGarden.dll"
+Dependencies:
+- Name: Quintessential
+  Version: 0.5.1
+- Name: ReductiveMetallurgyCampaign
+  Version: 1.3.1
+#OptionalDependencies
+#Mappings:
