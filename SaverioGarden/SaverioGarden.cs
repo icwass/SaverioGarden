@@ -26,17 +26,16 @@ public class MainClass : QuintessentialMod
 	public static MethodInfo PrivateMethod<T>(string method) => typeof(T).GetMethod(method, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 	public override Type SettingsType => typeof(MySettings);
 	public static QuintessentialMod MainClassAsMod;
-	public static bool showingCustomOptions = false;
+	public static bool showingCustomOptions = true;
 
-	public static bool PressedShowCustomOptions() => MySettings.Instance.showCustomOptionsKeybind.Pressed();
+	public static Keybinding showCustomOptions => ((MySettings)MainClassAsMod.Settings).showCustomOptionsKeybind;
+
 	public class MySettings
 	{
-		public static MySettings Instance => MainClassAsMod.Settings as MySettings;
-
 		//[SettingsLabel("Boolean Setting")]
 		//public bool booleanSetting = true;
 
-		[SettingsLabel("Show the customization options during RMC's solitaire.")]
+		[SettingsLabel("Show/Hide the customization options during RMC's solitaire.")]
 		public Keybinding showCustomOptionsKeybind = new() { Key = "R" };
 	}
 	public override void ApplySettings()
@@ -63,7 +62,6 @@ public class MainClass : QuintessentialMod
 		On.SolitaireScreen.method_50 += SolitaireScreen_Method_50;
 		On.class_198.method_537 += getSolitaireBoard;
 
-
 		foreach (Campaign campaign in QuintessentialLoader.AllCampaigns)
 		{
 			if (campaign.QuintTitle == "Reductive Metallurgy")
@@ -79,18 +77,9 @@ public class MainClass : QuintessentialMod
 	static bool isQuintessenceSigmarGarden(SolitaireScreen screen) => new DynamicData(screen).Get<bool>("field_3874");
 	static bool currentCampaignIsRMC(SolitaireScreen screen) => currentCampaignIsRMC() && !isQuintessenceSigmarGarden(screen);
 
-
-
-	static bool includeAnimismus = true;
-	static bool includeAir = true;
-	static bool includeWater = true;
-	static bool includeFire = true;
-	static bool includeEarth = true;
-	static bool includeSalt = true;
-
 	public static void SolitaireScreen_Method_50(On.SolitaireScreen.orig_method_50 orig, SolitaireScreen screen_self, float timeDelta)
 	{
-		if (PressedShowCustomOptions())
+		if (currentCampaignIsRMC(screen_self) && showCustomOptions.Pressed())
 		{
 			showingCustomOptions = !showingCustomOptions;
 			Sound toggleSound = showingCustomOptions ? class_238.field_1991.field_1872 : class_238.field_1991.field_1873; // ui_modal / ui_modal_close
@@ -115,9 +104,9 @@ public class MainClass : QuintessentialMod
 		// draw title and information
 		Vector2 position = panelOrigin + new Vector2(340f, 820f);
 		UI.DrawText("Saverio's Garden", position, UI.Title, textColor, TextAlignment.Centred, 463f);
-		position -= new Vector2(0, 40f);
+		
 
-
+		// define helpers
 		position = panelOrigin + new Vector2(98f, 780f);
 		void drawHeader(string header)
 		{
@@ -130,7 +119,11 @@ public class MainClass : QuintessentialMod
 			position -= new Vector2(0, 38f);
 		}
 
-		drawHeader("Customize the board generation with the settings below. Settings are applied to the next board generated, even if this menu is not visible.");
+		// "draw the rest of the owl"
+		string info = "Customize the board generation with the settings below. Settings are applied to the next board generated, even if this menu is not visible.";
+		info += "\n (Press '" + showCustomOptions.ToString() + "' to toggle menu visibility.)";
+
+		drawHeader(info);
 		drawHeader("");
 		//drawHeader("Include the following atom types:");
 		//checkToggle(ref includeAnimismus, "Vitae/Mors");
@@ -138,9 +131,17 @@ public class MainClass : QuintessentialMod
 		//checkToggle(ref includeWater, "Water");
 		//checkToggle(ref includeFire, "Fire");
 		//checkToggle(ref includeEarth, "Earth");
+		//checkToggle(ref includeSalt, "Salt");
 
 
 	}
+
+	static bool includeAnimismus = true;
+	static bool includeAir = true;
+	static bool includeWater = true;
+	static bool includeFire = true;
+	static bool includeEarth = true;
+	static bool includeSalt = true;
 
 	public static SolitaireGameState getSolitaireBoard(On.class_198.orig_method_537 orig, bool quintessenceSigmar)
 	{
