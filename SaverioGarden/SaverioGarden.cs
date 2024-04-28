@@ -6,6 +6,7 @@ using Quintessential;
 using Quintessential.Settings;
 using SDL2;
 using System;
+using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
@@ -21,7 +22,7 @@ using Font = class_1;
 //using AtomTypes = class_175;
 //using PartTypes = class_191;
 using Texture = class_256;
-public class MainClass : QuintessentialMod
+public partial class MainClass : QuintessentialMod
 {
 	public static MethodInfo PrivateMethod<T>(string method) => typeof(T).GetMethod(method, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 	public override Type SettingsType => typeof(MySettings);
@@ -62,20 +63,69 @@ public class MainClass : QuintessentialMod
 		On.SolitaireScreen.method_50 += SolitaireScreen_Method_50;
 		On.class_198.method_537 += getSolitaireBoard;
 
+		nullAtom = new AtomType()
+		{
+			field_2283 = (byte)0,
+			field_2284 = (string)class_134.method_254("Null"),
+			field_2285 = class_134.method_253("Elemental Null", string.Empty),
+			field_2286 = class_134.method_253("Null", string.Empty),
+			field_2287 = class_238.field_1989.field_81.field_598,
+			field_2288 = class_238.field_1989.field_81.field_599,
+			field_2290 = new class_106()
+			{
+				field_994 = class_238.field_1989.field_81.field_596,
+				field_995 = class_238.field_1989.field_81.field_597
+			}
+		};
+
+		// fetch RMC's filepath and campaign
+		bool foundTheThing = false;
+		string name = "ReductiveMetallurgyCampaign";
+		foreach (ModMeta mod in QuintessentialLoader.Mods)
+		{
+			if (mod.Name == name)
+			{
+				RMC_FilePath = mod.PathDirectory;
+				foundTheThing = true;
+				break;
+			}
+		}
+		if (!foundTheThing)
+		{
+			Logger.Log("[SaverioGarden] Could not find ReductiveMetallurgyCampaign... what? But it's a dependency though...");
+			throw new Exception("Load: Failed to find the expected mod.");
+		}
+		foundTheThing = false;
 		foreach (Campaign campaign in QuintessentialLoader.AllCampaigns)
 		{
 			if (campaign.QuintTitle == "Reductive Metallurgy")
 			{
 				rmc_campaign = campaign;
+				foundTheThing = true;
 				break;
 			}
 		}
+		if (!foundTheThing)
+		{
+			Logger.Log("[SaverioGarden] Could not find the RMC campaign... what? How?");
+			throw new Exception("Load: Failed to find the expected campaign.");
+		}
 	}
 
+	public static AtomType nullAtom;
 	static Campaign rmc_campaign;
+	public static string RMC_FilePath = "";
 	static bool currentCampaignIsRMC() => rmc_campaign == Campaigns.field_2330;
 	static bool isQuintessenceSigmarGarden(SolitaireScreen screen) => new DynamicData(screen).Get<bool>("field_3874");
 	static bool currentCampaignIsRMC(SolitaireScreen screen) => currentCampaignIsRMC() && !isQuintessenceSigmarGarden(screen);
+	public static void checkIfFileExists(string subpath, string file, string error)
+	{
+		if (!File.Exists(RMC_FilePath + subpath + file))
+		{
+			Logger.Log("[SaverioGarden] Could not find '" + file + "' in the folder '" + RMC_FilePath + subpath + "'");
+			throw new Exception(error);
+		}
+	}
 
 	public static void SolitaireScreen_Method_50(On.SolitaireScreen.orig_method_50 orig, SolitaireScreen screen_self, float timeDelta)
 	{
@@ -125,33 +175,20 @@ public class MainClass : QuintessentialMod
 
 		drawHeader(info);
 		drawHeader("");
-		//drawHeader("Include the following atom types:");
-		//checkToggle(ref includeAnimismus, "Vitae/Mors");
-		//checkToggle(ref includeAir, "Air");
-		//checkToggle(ref includeWater, "Water");
-		//checkToggle(ref includeFire, "Fire");
-		//checkToggle(ref includeEarth, "Earth");
-		//checkToggle(ref includeSalt, "Salt");
-
-
+		drawHeader("Include the following atom types:");
+		checkToggle(ref GenerationSettings.includeAnimismus, "Vitae/Mors");
+		checkToggle(ref GenerationSettings.includeAir, "Air");
+		checkToggle(ref GenerationSettings.includeWater, "Water");
+		checkToggle(ref GenerationSettings.includeFire, "Fire");
+		checkToggle(ref GenerationSettings.includeEarth, "Earth");
+		checkToggle(ref GenerationSettings.includeSalt, "Salt");
 	}
-
-	static bool includeAnimismus = true;
-	static bool includeAir = true;
-	static bool includeWater = true;
-	static bool includeFire = true;
-	static bool includeEarth = true;
-	static bool includeSalt = true;
 
 	public static SolitaireGameState getSolitaireBoard(On.class_198.orig_method_537 orig, bool quintessenceSigmar)
 	{
+		if (!currentCampaignIsRMC() || quintessenceSigmar) return orig(quintessenceSigmar);
 
-		if (!currentCampaignIsRMC() || quintessenceSigmar || !showingCustomOptions) return orig(quintessenceSigmar);
-
-
-
-
-		// otherwise, default to the regular RMC variant
-		return orig(quintessenceSigmar);
+		//otherwise, generate a board
+		return RMC_getRandomizedSolitaireBoard();
 	}
 }
